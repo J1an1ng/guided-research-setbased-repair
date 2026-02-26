@@ -1,0 +1,9 @@
+CORA Debug Log
+
+
+=== ERROR CAUGHT ===
+Message: Undefined function 'interval' for input arguments of type 'double'.
+
+Stack:
+  D:\OneDrive\Desktop\TUM\SS26\Guided_Research\commonroad-highway-fail-safe-planning\matlab_primitive_generation\primitive\generation\with_repeating_reach\state_processors\StateProcessorForDiscrContrWithDistProc.m (line 15) in StateProcessorForDiscrContrWithDistProc.StateProcessorForDiscrContrWithDistProc
+  D:\OneDrive\Desktop\TUM\SS26\Guided_Research\commonroad-highway-fail-safe-planning\matlab_primitive_generation\debug_cora_error.m (line 42) in debug_cora_error

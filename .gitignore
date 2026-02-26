@@ -1,0 +1,6 @@
+runner/primitives_for_edgar/out/
+*.asv
+__pycache__/
+.venv/
+.idea/
+.run/

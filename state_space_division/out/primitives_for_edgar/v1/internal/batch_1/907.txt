@@ -1,0 +1,2 @@
+Building primitive scaffolds for start set: 907. #Valid trajs: 76. #Discarded trajs: 47.
+Counter: 1. 

@@ -1,0 +1,39 @@
+fail_fast: true
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v3.2.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-added-large-files
+            args: [ '--maxkb=4000' ]
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.4.7
+      hooks:
+          - id: ruff
+            args: [ --fix ]
+          - id: ruff-format
+    -   repo: local
+        hooks:
+        -   id: mh_style
+            name: mh_style
+            entry: mh_style
+            args: [--fix]
+            files: ^(.*\.m)$
+            exclude: 'matlab_primitive_generation/(First_Step|Fmincon|MController_Cont_Jerk|Max_Occupancy|deprecated)/.*'
+            language: python
+            additional_dependencies: [miss_hit_core==0.9.44]
+        -   id: mh_lint
+            name: mh_lint
+            entry: mh_lint
+            files: ^(.*\.m)$
+            exclude: 'matlab_primitive_generation/(First_Step|Fmincon|MController_Cont_Jerk|Max_Occupancy|deprecated)/.*'
+            language: python
+            additional_dependencies: [miss_hit==0.9.44]
+        -   id: checkcode
+            name: checkcode
+            files: ^(.*\.m)$
+            exclude: 'matlab_primitive_generation/(First_Step|Fmincon|MController_Cont_Jerk|Max_Occupancy|deprecated)/.*'
+            entry: matlab_checkcode.sh
+            language: script

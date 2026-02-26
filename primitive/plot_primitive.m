@@ -1,0 +1,16 @@
+function plot_primitive(settings, p, R_primitive, sim_res)
+    f = plot_reachsets( ...
+        p.ref_traj, ...
+        R_primitive, ...
+        settings.k, ...
+        3, ...
+        sim_res);
+
+    if settings.save_plot
+        saveas(f, p_fig_out_path, 'fig');
+    end
+
+    if ~settings.show_plot
+        close(f);
+    end
+end

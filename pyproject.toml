@@ -1,0 +1,50 @@
+[project]
+name = "commonroad-primitive-planning"
+version = "0.1.0"
+description = "A framework for fail-safe trajectory planning using motion primitives."
+authors = [
+    {name = "Sebastian Mair",email = "sebi.mair@tum.de"}
+]
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "commonroad-io @ git+ssh://git@gitlab.lrz.de/cps/commonroad/commonroad-io.git@develop",
+    "scipy (>=1.15.3,<2.0.0)",
+    "numpy (>=2.2.5,<3.0.0)",
+    "scikit-learn (>=1.6.1,<2.0.0)",
+    "shapely(>=2.1.0,<3.0.0)",
+    "h5py (>=3.13.0,<4.0.0)",
+    "stable-baselines3 (>=2.6.0,<3.0.0)",
+    "sb3-contrib (>=2.6.0,<3.0.0)",
+    "matplotlib (>=3.10.3,<4.0.0)",
+    "ipywidgets (>=8.1.7,<9.0.0)",
+    "ipympl (>=0.9.7,<0.10.0)",
+    #"sonia-py[commonroad] @ file:///workspaces/sonia",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.tests.dependencies]
+ruff = "^0.11.9"
+pre-commit = "^4.2.0"
+pytest = "^8.3.5"
+coverage = "^7.8.2"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^4.4.2"
+ipython = "^9.2.0"
+snakeviz = "^2.2.2"
+marimo = "^0.18.1"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+format.quote-style = "double"
+target-version = "py312"
+lint.ignore = ["E203"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
