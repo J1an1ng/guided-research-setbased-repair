@@ -13,3 +13,5 @@
 在每次启动新的 MATLAB 会话后，必须重新运行：installCORA
 
 3. 运行generate_primitives_for_edgar.m
+
+路径为runner\primitives_for_edgar
