@@ -17,7 +17,7 @@
 
 路径为runner\primitives_for_edgar
 
-发现以及进度：
+## 发现以及进度：
 
 现在主要在排 reachable set 生成这条链路，目前大概情况是这样：
 
@@ -35,4 +35,4 @@ params.u 和 timeStep 不匹配的问题，现在每一步只传当前输入列�
 Index in position 1 exceeds array bounds.
 OccupancyComputer/compute_accumulated_occupancy
 
-但是我觉得我的方向不是很对....因为我今天生成这个reachable set跑到i=100跑了非常久。
+但是我觉得我的方向不是很对....因为我今天生成一个reachable set跑到i=100跑了非常久。
