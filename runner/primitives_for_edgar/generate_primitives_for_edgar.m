@@ -21,7 +21,7 @@ non_zero_meas_dist(k.V) = 0.03;
 model_add_dist = zeros(k.get_size(), 1); % model_dist_for_kst_final(k);
 
 %% Where the generated primitives are stored
-result_dir = ResultDir('out/primitives_for_edgar/v18');
+result_dir = ResultDir('out/primitives_for_edgar/v4');
 
 %% TODO adapt if you have more CPUs available
 num_workers = 1;
@@ -92,7 +92,7 @@ max_half_width = params.max_road_width / 2;
 
 debug = false;
 create_plot = true;
-do_random_simulations = true;
+do_random_simulations = false;
 
 settings = PrimitiveGenerationSettings( ...
     result_dir, ...
