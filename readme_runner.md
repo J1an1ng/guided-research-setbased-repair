@@ -7,7 +7,7 @@
 
 1. 添加项目路径
 
-我直接将整个 commonroad-highway-fail-safe-planning 及其subfolders加入 MATLAB 路径
+我直接将整个 commonroad-highway-fail-safe-planning 及其subfolders加入 MATLAB 路径（但是这个repo里我只上传了commonroad-highway-fail-safe-planning/matlab_primitive_generation，可能需要把这个repo里所有的文件夹都添加到路径才能正常跑）
 
 2. CORA 初始化（每次 MATLAB 会话必须执行）
 
