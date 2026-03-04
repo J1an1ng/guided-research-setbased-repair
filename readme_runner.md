@@ -36,3 +36,44 @@ Index in position 1 exceeds array bounds.
 OccupancyComputer/compute_accumulated_occupancy
 
 但是我觉得我的方向不是很对....因为我今天生成一个reachable set跑到i=100跑了非常久。
+
+最初报错的位置
+cora/contSet/@zonotope/split.m
+→ aux_splitOneDim
+触发行 G(:,dim)
+Error：Index in position 2 exceeds array bounds. Index must not exceed 8.
+原因：dim = 9 size(G,2) = 8
+split调用链：cora/contDynamics/@contDynamics/private/priv_select.m
+这个函数负责：
+当 linearization error 超过阈值时，选择一个维度，调用 split() 来把集合分裂
+priv_select调用链：cora/contDynamics/@contDynamics/linReach.m
+它做的事情：
+线性化系统，传播 zonotope，计算 remainder，如果误差太大 → 调 priv_select 分裂集合
+linReach调用链：cora/contDynamics/@nonlinearSys/initReach.m
+这个函数：初始化 nonlinear reach，设置初始 reachable set，调用 linReach 进行传播
+initreach调用链：cora/contDynamics/@contDynamics/reach.m
+reach调用：RepeatingReachPerformer.generate
+文件：primitive/generation/with_repeating_reach/RepeatingReachPerformer.m
+
+完整调用链：
+generate_primitives_for_edgar
+    ↓
+PrimitiveSetGenerator.start_generation
+    ↓
+PrimitiveSetGenerator.perform_reach
+    ↓
+perform_reach_for_primitive
+    ↓
+RepeatingReachPerformer.generate
+    ↓
+cora/contDynamics/@contDynamics/reach
+    ↓
+cora/contDynamics/@nonlinearSys/initReach
+    ↓
+cora/contDynamics/@contDynamics/linReach
+    ↓
+cora/contDynamics/@contDynamics/private/priv_select
+    ↓
+cora/contSet/@zonotope/split
+    ↓
+aux_splitOneDim   ← 报错位置
