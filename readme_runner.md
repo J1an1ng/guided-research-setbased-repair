@@ -46,6 +46,10 @@ Error：Index in position 2 exceeds array bounds. Index must not exceed 8.
 split调用链：cora/contDynamics/@contDynamics/private/priv_select.m
 这个函数负责：
 当 linearization error 超过阈值时，选择一个维度，调用 split() 来把集合分裂
+## 线性误差的阈值可调 
+## Jacobin矩阵的设置上维度不匹配
+## CORA reduce function 
+## MATLAB profile
 priv_select调用链：cora/contDynamics/@contDynamics/linReach.m
 它做的事情：
 线性化系统，传播 zonotope，计算 remainder，如果误差太大 → 调 priv_select 分裂集合
@@ -77,3 +81,55 @@ cora/contDynamics/@contDynamics/private/priv_select
 cora/contSet/@zonotope/split
     ↓
 aux_splitOneDim   ← 报错位置
+
+
+## 
+
+最初报错的index error问题可能的根源：box conversion，当 split(Z) 被调用时，它会先执行：Z = zonotope(interval(Z))，把原来的 zonotope变成 axis-aligned box zonotope
+如果状态是 n 维，box zonotope 应该有n 个 generator。但是我们已经知道dim 9,10,11,12 radius = 0也就是说：这些维度是 zero radius，即interval lower bound = upper bound，所以这些维度在几何上其实是一个点。当 box zonotope 被构造时，这些维度可能 不会产生 generator，导致state dimension = 12，generator number = 8。但 split 代码还在做：for dim = 1:length(Z.c) dim = 1..12,当 dim = 9 时：G(:,9)就越界了。
+
+priv_select.m 第 35–66 行
+1. 生成所有候选Split
+Rtmp = split(Rinit.set)
+注意这里 没有给 split 指定维度。所以 split.m 会进入 单参数模式：split(Z)
+在这种情况下，split 会：
+先把 zonotope 转成一个 interval hull（box）
+Z = zonotope(interval(Z))
+然后对 每个维度都试一次 split，例如如果状态空间是 12 维：
+split dimension 1
+split dimension 2
+...
+split dimension 12
+所以这一步会产生：12 个候选 split 方案,每个方案对应一个 split 维度。
+2. 对每个 split 方案做一次传播测试
+接下来 priv_select.m 会做：每个 split 会产生两个子集合,只保留第一个 half-set然后做：linReach propagation，即用这个 split 后的集合继续做 reachable set propagation
+3. 计算每个 split 的误差指标
+perInd = max(Rtp.error ./ maxError):线性化误差 / 允许误差
+这个指标越小，说明这个 split 后的 reachable set approximation 更好。
+4. 选出最佳 split 维度
+[~, dimForSplit] = min(perfInd): 选择误差指标最小的那个维度。
+5. 当Rtp.error > maxError 进行split
+if perfInd > 1
+    dimForSplit = priv_select(sys,Rstart,params,options);
+end
+
+注：maxError 是上层误差容忍度，现在的设置是maxError = 1e6，允许非常大的误差，所以理论上split 很少会发生。
+尝试了设置maxError = Inf 时，报错Abort analysis due to reachable set explosion!
+（cora_options.maxError = Inf * ones(state_proc.get_state_size(), 1);）
+尝试在CORA的split函数中进行修改成Girard reduction：
+% Before (line 46):
+Z=zonotope(interval(Z));
+% After:
+Z=reduce(Z,'girard',1);
+
+% Before (line 55):
+Z=zonotope(interval(Z));
+% After:
+Z=reduce(Z,'girard',1);
+i=2时报错：CORA error message: Index in position 2 exceeds array bounds. Index must not exceed 11.
+
+## 
+Girard order = 1 ≈ Box
+Position 2的 output是哪个
+
+Rinit

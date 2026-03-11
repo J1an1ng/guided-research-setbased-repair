@@ -86,7 +86,7 @@ try
     fprintf(fid, '\nSetting up CORA options...\n');
     cora_options = create_cora_options_1();
     cora_options.timeStep = 0.01;
-    cora_options.maxError = 1e6 * ones(state_proc.get_state_size(), 1);
+    cora_options.maxError = Inf * ones(state_proc.get_state_size(), 1);
     
     fprintf(fid, 'CORA options set. Starting reach...\n');
     fclose(fid);  % Flush before reach
