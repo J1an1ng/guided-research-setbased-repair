@@ -1,3 +1,5 @@
+clc;
+clear all;
 %% Model settings
 model = @kst_inp_delta;
 k = KSTInpDeltaStateOrder();
@@ -21,7 +23,7 @@ non_zero_meas_dist(k.V) = 0.03;
 model_add_dist = zeros(k.get_size(), 1); % model_dist_for_kst_final(k);
 
 %% Where the generated primitives are stored
-result_dir = ResultDir('out/primitives_for_edgar/v4');
+result_dir = ResultDir('out/primitives_for_edgar/v15');
 
 %% TODO adapt if you have more CPUs available
 num_workers = 1;
