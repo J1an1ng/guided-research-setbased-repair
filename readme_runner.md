@@ -2,12 +2,9 @@
 项目运行说明
 直接clone整个文件夹到本地在MATLAB中打开generate_primitives_for_edgar.m即可
 
-在当前项目中，我使用 add_project 没用。
-实际运行方式如下：
 
 1. 添加项目路径
-
-我直接将整个 commonroad-highway-fail-safe-planning 及其subfolders加入 MATLAB 路径（但是这个repo里我只上传了commonroad-highway-fail-safe-planning/matlab_primitive_generation，可能需要把这个repo里所有的文件夹都添加到路径才能正常跑）
+使用add_this_project.m, 路径为change_path\add_this_project.m
 
 2. CORA 初始化（每次 MATLAB 会话必须执行）
 
@@ -133,3 +130,39 @@ Girard order = 1 ≈ Box
 Position 2的 output是哪个
 
 Rinit
+
+## 
+入口	generate_primitives_for_edgar.m	正确使用 KSTInpDeltaStateOrder(4D)、InpOrderADelta、kst_inp_delta、pd_controller_inp_delta_4d
+
+## 
+State/Input 定义	KSTInpDeltaStateOrder.m	SIZE=4, [X=1,Y=2,V=3,PSI=4]，无 DELTA 属性,InpOrderADelta.m	SIZE=2, [DELTA=1,A=2]
+
+## 
+dynamic	kst_inp_delta.m	delta = u(i.DELTA) 从输入读，产出 4D 导数
+
+## 
+controller	pd_controller_inp_delta_4d.m	只访问 k.X/Y/V/PSI，输出到 inp_order.DELTA 和 inp_order.A
+
+## 
+constraints	KSTInpDeltaConstraints.m	i.DELTA 做 input 约束，注释明确写"delta 不是 state"
+
+## 
+ref-trajectory	KSTInpTrajTargetPoint.m、KSTInpTrajTargetPointGenerator.m、InpCreatorForADelta.m	只用 k.X/Y/V/PSI 和 inp_order.DELTA/A
+
+## 
+trace	lat_pure_pursuit.m	只用 k.X/Y/PSI
+
+## 
+close-loop system	create_cont_time_discr_contr_model.m、ControlledModelParamConfig.m、ControlledModelParamValues.m	全部通过 state_order.get_size() / inp_order.SIZE 动态获取维度
+
+## 
+state process	StateProcessorForDiscrContrWithDistProc.m.KSTDistProcForRotatedPositionalDists.m用 k.SIZE 计算增广状态，无硬编码维度
+
+## 
+reachability	RepeatingReachPerformer.m	维度无关
+
+## 
+Primitive 生成	PrimitiveSetGenerator.m、PrimitiveGenerationSettings.m、Primitive.m	维度无关
+
+## 
+归一化/采样/边界	norm_kst.m、BoxLikeStateSpaceDivider.m、create_kst_inp_delta_state_bounds.m、create_inp_bounds_for_a_delta.m	均用 get_size() 动态创建
