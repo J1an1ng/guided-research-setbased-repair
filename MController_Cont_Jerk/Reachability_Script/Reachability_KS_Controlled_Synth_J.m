@@ -1,0 +1,132 @@
+N_Sim = 100;
+total_time = linspace(0, 1, N_Sim);
+
+R_total = struct([]);
+
+for initial_vel_counter = 0:0
+    for initial_acc_counter = 0:0
+        for jerk_counter = 0:0
+            tic;
+            for v_delta_counter = 0:1
+                display(v_delta_counter);
+
+                parameter = parameters_vehicle4;
+                v0_step = 22.22 / 4;
+                v0 = 22.22 - v0_step * initial_vel_counter;
+                a0 = -11.5 / 4 * initial_acc_counter;
+                % jerk = -(11.5-a0)/4 * jerk_counter;
+                jerk = -4;
+                % jerk = 0;
+                Iv_delta_step = 0.5 / 8;
+                Iv_delta = Iv_delta_step * v_delta_counter;
+                % Iv_delta=0.25;
+                ha0 = 0;
+
+                initial_state = [0; 0; 0; v0; 0; ha0; a0];
+
+                Input_v_delta = linspace(Iv_delta, Iv_delta, N_Sim);
+
+                % Test
+                % Input_v_delta = [linspace(0,0,3), linspace(-0.2, -0.2, 6), linspace(0.2, 0.2, 12), linspace(-0.2, -0.2, 6), linspace(0,0,3)];
+
+                Input_jerk = linspace(jerk, jerk, N_Sim);
+
+                %% Disturbances
+                W = 0.5 .* interval([-0.02; -0.3], [0.02; 0.3]); % Input disturbance
+                V = 0.5 .* interval([-0.0004; -0.0004; -0.006; -0.002; -0.002; -0.002; -0.002], ...
+                                 [0.0004; 0.0004; 0.006; 0.002; 0.002; 0.002; 0.002]); % Measurement disturbance
+                params.U = cartProd(zonotope(W), zonotope(V));
+
+                X = [initial_state, zeros(length(initial_state), N_Sim - 1)];
+
+                %% Reachability Options
+                options.taylorTerms = 5;
+                options.zonotopeOrder = 20;
+                options.alg = 'lin';
+                options.tensorOrder = 3;
+                options.errorOrder = 25;
+                options.intermediateOrder = 25;
+                options.intermediateTerms = 4;
+
+                % params.U = zonotope(0,0);
+                Dyn = nonlinParamSys(@KS_Controlled_Synth_J, 14, 9, 2, 'constParam');
+                reachsteps = 20;
+                R0_ext = zonotope([initial_state; initial_state], 0.2 * diag([1; 1; 0.3; 1; 0.3; 0.3; 1; 0; 0; 0; 0; 0; 0; 0]));
+                % params.R0 = R0;
+                %% Random Simulations (Scheitert, da params.paramInt Inputs möchte)
+                % simOpt.points = 40;
+                % params.paramInt = [0;0];
+                % params.tFinal = total_time(end);
+                % params.R0 = R0_ext;
+                % simRes = simulateRandom(Dyn, params, simOpt);
+                %% Reachability
+                R0 = R0_ext;
+                RS_ext = [];
+                RSred_ext = [];
+                for k = 1:N_Sim - 1
+                    %% Display progress of current primitive
+                    display(k);
+                    %% Input and parameter for current time step
+                    params.paramInt = [Input_v_delta(k); Input_jerk(k)];
+                    dt = total_time(k + 1) - total_time(k);
+                    options.timeStep = dt / reachsteps;
+                    params.tStart = 0;
+                    params.tFinal = dt;
+                    params.R0 = R0_ext;
+                    %% Calculate reachset
+                    RS_ext_k = reach(Dyn, params, options);
+                    %% Set initial zonotope for next iteration to end zonotope of current iteration
+                    R0_ext = RS_ext_k(end).timePoint.set{end};
+                    %% Create a copy of the reachset and reduce it's zonotopes
+                    RSred_k = RS_ext_k;
+                    for yy = 1:length(RSred_k.timePoint.set)
+                        RSred_k.timePoint.set{yy} = reduce(project(RSred_k.timePoint.set{yy}, [1:7]), 'girard', 2);
+                    end
+                    for xx = 1:length(RSred_k.timeInterval.set)
+                        RSred_k.timeInterval.set{xx} = reduce(project(RSred_k.timeInterval.set{xx}, [1:7]), 'girard', 2);
+                    end
+                    %% Add reachset(s) to common reach object
+                    RS_ext = add(RS_ext, RS_ext_k);
+                    RSred_ext = add(RSred_ext, RSred_k);
+                end
+
+                %% Shift the end zonotope of primitive to beginning
+                R_endshift_center = R0.Z(:, 1);
+                Rred_endshift_center = R0.Z(1:7, 1);
+                R_end = RS_ext(end).timePoint.set{end, 1};
+                R_endshift_G = R_end.Z(:, 2:end);
+                Rred_endshift_G = RSred_ext(end).timePoint.set{end, 1}.Z(:, 2:end);
+                R_endshift = zonotope(R_endshift_center, R_endshift_G);
+                Rred_endshift = zonotope(Rred_endshift_center, Rred_endshift_G);
+
+                %% Check whether the (shifted) endszonotope is included in the initial zonotope
+                Contains = R0.contains(R_endshift);
+                Contains_red = project(R0, [1:7]).contains(Rred_endshift);
+                % if Contains == 0
+                %    fid = fopen('ZonotopeUnchained.txt', 'a+');
+                %    fprintf(fid, 'Unchained: steering wheel velocity = %3.2f, jerk = %3.2f', Iv_delta , jerk);
+                %    fclose(fid);
+                %    fprintf('Warning: Zonotope Unchained')
+                % else
+                %    fprintf('Zonotope Chained! steering wheel velocity = %3.2f, jerk = %3.2f', Iv_delta , jerk')
+                % end
+
+                %% Lump primitives that differ only by steering angle input together
+                display(v_delta_counter);
+                R_total(v_delta_counter + 1).RS_ext = RS_ext;
+                Rred_total(v_delta_counter + 1).RS_ext = RSred_ext;
+                R_total(v_delta_counter + 1).R0 = R0;
+                Rred_total(v_delta_counter + 1).R0 = project(R0, [1:6]);
+                R_total(v_delta_counter + 1).R_endshifted = R_endshift;
+                Rred_total(v_delta_counter + 1).R_endshifted = Rred_endshift;
+            end
+
+            %% Export the batch of primitives (Constant: ; Varying steering angle velocities)
+            Save_Reachset_Bulk(R_total, [jerk, Iv_delta_step, a0, initial_state(4)], 'outpath', './Saved_Primitives/');
+            Save_Reachset_Bulk(Rred_total, [jerk, Iv_delta_step, a0, initial_state(4)], 'savejson', true, 'suffix', 'red', 'outpath', 'Saved_Primitives');
+            display(['saved ' Outfilename '; jerk_counter' jerk_counter 'a0_counter' initial_acc_counter]);
+            display(['saved ' Outfilenamered '; jerk_counter' jerk_counter 'a0_counter' initial_acc_counter]);
+            toc;
+        end
+    end
+end

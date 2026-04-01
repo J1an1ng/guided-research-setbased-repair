@@ -1,0 +1,86 @@
+N_Sim = 100;
+total_time = linspace(0,1,100);
+
+R_total = struct([])
+
+tic
+for initial_vel_counter = 4;
+for initial_acc_counter = 1:4;
+for jerk_counter = 0:4;
+for v_delta_counter = 0:4;
+
+parameter = parameters_vehicle4;
+v0_step = 22/4;
+v0 = v0_step * initial_vel_counter;
+a0 = 11.5/4 * initial_acc_counter;
+jerk = -() * jerk_counter;
+Iv_delta_step = 0.55/4;
+Iv_delta = Iv_delta_step * v_delta_counter;
+
+initial_state = [0;0;0;v0;0];
+
+Input_v_delta = linspace(Iv_delta, Iv_delta, N_Sim);
+Input_ax = linspace(a0, a0+jerk*total_time(end), N_Sim);
+
+X = [initial_state, zeros(length(initial_state), N_Sim-1)];
+
+%% Reachability Options
+options.taylorTerms = 5;
+options.zonotopeOrder = 20;
+options.alg = 'lin';
+options.tensorOrder = 3;
+options.errorOrder = 25;
+options.intermediateOrder = 25;
+options.intermediateTerms = 4;
+
+%params.U = zonotope(0,0);
+Dyn = nonlinParamSys(@KS_Controlled_Synth, 10, 1, 2, 'constParam');
+reachsteps = 10;
+R0_ext = zonotope([initial_state;initial_state], 0.2*diag([1;1;0.1;1;0.1;0;0;0;0;0]));
+%params.R0 = R0;
+%% Random Simulations (Scheitert, da params.paramInt Inputs möchte)
+%simOpt.points = 40;
+%params.paramInt = [0;0];
+%params.tFinal = total_time(end);
+%params.R0 = R0_ext;
+%simRes = simulateRandom(Dyn, params, simOpt);
+%% Reachability
+R0 = R0_ext;
+RS_ext = [];
+for k = 1:N_Sim-1
+    display(k);
+    params.paramInt = [Input_v_delta(k); Input_ax(k)];
+    dt = total_time(k+1)-total_time(k);
+    options.timeStep = dt/reachsteps;
+    params.tStart = 0;
+    params.tFinal = dt;
+    params.R0 = R0_ext;
+    RS_ext_k = reach(Dyn, params, options);
+    R0_ext = RS_ext_k(end).timePoint.set{end};
+    RS_ext = add(RS_ext,RS_ext_k);
+end
+Rtp = project(R0_ext,1:10);
+R_endshift_center = R0.Z(:,1);
+R_end = RS_ext(end).timePoint.set{end,1};
+R_endshift_G = R_end.Z(:,2:end);
+R_endshift = zonotope(R_endshift_center, R_endshift_G);
+Contains = R0.contains(R_endshift);
+if Contains == 0
+    fid = fopen('ZonotopeUnchained.txt', 'a+');
+    fprintf(fid, 'Unchained: steering wheel velocity = %3.2f, jerk = %3.2f', Iv_delta , jerk);
+    fclose(fid);
+else
+    fprintf('Zonotope Chained! steering wheel velocity = %3.2f, jerk = %3.2f', Iv_delta , jerk')
+end
+display(v_delta_counter);
+R_total(v_delta_counter+1).RS_ext = RS_ext;
+R_total(v_delta_counter+1).R0 = R0;
+R_total(v_delta_counter+1).R_endshifted = R_endshift;
+end
+Outfilespec = 'jerk_%4.2f_Iv_step_%4.4f_a0_%4.2f_v0_%4.2f.mat';
+Outfilename=sprintf(Outfilespec, jerk, Iv_delta_step, a0, initial_state(4));
+save(Outfilename, 'R_total');
+display(['saved ' Outfilename 'jerk_counter' jerk_counter 'a0_counter' initial_acc_counter]);
+end
+end
+toc

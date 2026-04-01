@@ -1,0 +1,47 @@
+function status = Save_Reachset_Bulk(R_total, NameParams, varargin)
+%SAVE_REACHSET_BULK Summary of this function goes here
+%   Detailed explanation goes here
+
+%% Parse Input arguments
+default_savejson = false;
+default_outpath = './Saved_Primitives/';
+default_suffix = '';
+validation_outpath=@(x) isa(x, 'char');
+validation_savejson = @(x) isa(x, 'logical');
+validation_suffix = @(x) isa(x, 'char');
+parser = inputParser;
+
+addRequired(parser, 'R_total');
+addRequired(parser, 'NameParams');
+addParameter(parser, 'savejson', default_savejson, validation_savejson);
+addParameter(parser, 'outpath', default_outpath, validation_outpath);
+addParameter(parser, 'suffix', default_suffix, validation_suffix);
+
+parse(parser,R_total,NameParams, varargin{:});
+R_total = parser.Results.R_total;
+savejson=parser.Results.savejson;
+outpath=parser.Results.outpath;
+suffix = parser.Results.suffix;
+NameParams = parser.Results.NameParams;
+
+%% Generate the Outfilename
+Outfilespec = strcat(outpath, 'jerk_%4.2f_Iv_step_%4.4f_a0_%4.2f_v0_%4.2f');
+Outfilename=sprintf(Outfilespec, NameParams(1), NameParams(2), NameParams(3), NameParams(4));
+Outfilename=strcat(Outfilename, suffix);
+
+%% Check if outpath exists and if not create it
+if ~exist(outpath, 'dir')
+    mkdir(outpath);
+end
+%% Save the file as a .mat
+save(strcat(Outfilename,'.mat'), "R_total");
+
+%% Save as json if wanted
+if ~exist(strcat(outp))
+if savejson
+    fid = fopen(strcat(strcat(Outfilename,'.json')), 'w+');
+    fprintf(fid, '%s', jsonencode(R_total));
+    fclose(fid)
+end
+
+end

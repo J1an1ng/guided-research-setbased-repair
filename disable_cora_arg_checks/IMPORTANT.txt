@@ -1,0 +1,2 @@
+Add this folder to MATLAB path in order to disable the input checking of
+CORA, which may drastically slow down your code.
