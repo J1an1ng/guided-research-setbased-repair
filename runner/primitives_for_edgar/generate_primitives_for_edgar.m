@@ -13,17 +13,19 @@ constraints = KSTInpDeltaConstraints(k, i, params);
 terminal_cond = StandstillTerminalCondition(k, 1);
 
 %% Disturbances
-state_meas_dist = zeros(k.get_size(), 1);
+% state_meas_dist = zeros(k.get_size(), 1); 
 non_zero_meas_dist = zeros(k.get_size(), 1);
 non_zero_meas_dist(k.X) = 0.03;
 non_zero_meas_dist(k.Y) = 0.01;
 non_zero_meas_dist(k.PSI) = 0.0001;
 non_zero_meas_dist(k.V) = 0.03;
+%% 给 state_meas_dist 赋非零值
+state_meas_dist = non_zero_meas_dist;
 %% TODO specify other disturbances if required
 model_add_dist = zeros(k.get_size(), 1); % model_dist_for_kst_final(k);
 
 %% Where the generated primitives are stored
-result_dir = ResultDir('out/primitives_for_edgar/v15');
+result_dir = ResultDir('out/primitives_for_edgar/v26');
 
 %% TODO adapt if you have more CPUs available
 num_workers = 1;
@@ -87,6 +89,7 @@ dt_controller = 0.01;
 
 cora_options = create_cora_options_1();
 cora_options.timeStep = dt_controller;
+%cora_options.maxError = 1e8 * ones(state_proc.get_state_size(), 1);
 cora_options.maxError = 1e6 * ones(state_proc.get_state_size(), 1);
 
 occ_comp = create_kst_occ_comp(k, params);

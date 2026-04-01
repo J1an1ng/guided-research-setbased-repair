@@ -1,3 +1,4 @@
+%% input改为delta
 function u = pd_controller_inp_delta_4d(state, ref_state, ref_inp, state_order, inp_order, params, weights)
     %% We do not use argument validation here for the sake of performance
     %% (see matlab_feature_testing/function_arg_with_validation_performance)

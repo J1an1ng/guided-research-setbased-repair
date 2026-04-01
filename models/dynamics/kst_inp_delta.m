@@ -1,3 +1,4 @@
+%% delta作为input 
 % KST - Kinematic Single-Track model with steering angle as input
 function dx = kst_inp_delta(x, u, state_order, inp_order, params)
     k = state_order;

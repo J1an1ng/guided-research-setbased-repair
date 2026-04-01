@@ -166,3 +166,27 @@ Primitive 生成	PrimitiveSetGenerator.m、PrimitiveGenerationSettings.m、Primi
 
 ## 
 归一化/采样/边界	norm_kst.m、BoxLikeStateSpaceDivider.m、create_kst_inp_delta_state_bounds.m、create_inp_bounds_for_a_delta.m	均用 get_size() 动态创建
+
+## R_0
+R_0 的 12 行（维度）分别对应什么
+状态维度 
+n=4,n=4（KSTInpDeltaStateOrder.SIZE = 4），经过 process_initial_set 三步处理后得到 3n=12维：
+行号	维度	来源
+1	X（位置x）	真实状态
+2	Y（位置y）	真实状态
+3	V（速度）	真实状态
+4	PSI（航向角）	真实状态
+5	X'（位置x副本）	project(r_0, [1:4, 1:4]) 复制的上一拍测量状态
+6	Y'（位置y副本）	同上
+7	V'（速度副本）	同上
+8	PSI'（航向角副本）	同上
+9	meas_dist_X	cartProd(r_0, obj.meas_dist) 拼接的测量噪声
+10	meas_dist_Y	同上
+11	meas_dist_V	同上
+12	meas_dist_PSI	同上
+
+state_meas_dist = zeros(k.get_size(), 1);
+obj.meas_dist = zonotope(interval(-zeros(4,1), zeros(4,1))) = 一个零体积的点（退化 zonotope，没有 generators）。
+所以 cartProd(r_0_8dim, obj.meas_dist) 只是把维度从 8 扩到 12，但不增加任何新 generators。
+
+## 尝试state_meas_dist 赋非零值
